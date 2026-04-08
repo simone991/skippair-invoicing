@@ -32,7 +32,7 @@ export default function SettingsClient({ settings: initial }: { settings: Settin
         language: 'en', is_test: true, quote_number: 'TEST',
         recipient_name: 'Test Recipient', recipient_address: '1 Test Street', recipient_country: 'France',
         recipient_country_code: 'FR', recipient_email: testEmail, recipient_type: 'company', recipient_vat_zone: 'fr',
-        service_name: 'Travel agency commission', service_type: 'Test', taxable_amount: '100',
+        service_name: 'Travel agency commission', service_type: 'Test', taxable_amount: '100', send_to_email: '', is_test: false,
         start_date: '01.01.2026', end_date: '07.01.2026', starting_port: 'Test Port', landing_port: 'Test Port', nb_travellers: '2', client_total_price: '1.000 EUR',
       }),
     })

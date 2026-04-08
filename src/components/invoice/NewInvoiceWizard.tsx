@@ -29,7 +29,7 @@ const EMPTY_FORM: InvoiceFormData = {
   service_name: 'Travel agency commission',
   service_type: '', boat_model: '', boat_year: '',
   start_date: '', end_date: '', starting_port: '', landing_port: '',
-  nb_travellers: '', client_total_price: '', taxable_amount: '',
+  nb_travellers: '', client_total_price: '', taxable_amount: '', send_to_email: '',
 }
 
 export default function NewInvoiceWizard({ settings, userRole }: Props) {
