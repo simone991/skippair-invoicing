@@ -174,7 +174,7 @@ export default function RecipientsClient({ recipients: initial, userRole, openNe
                 ].map(f => (
                   <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                     <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>{f.label} {f.req && <span style={{ color: 'var(--red)' }}>*</span>}</label>
-                    <input className="form-input" type={f.type ?? 'text'} placeholder={f.placeholder} value={(form as Record<string, string>)[f.key]} onChange={e => setF(f.key as keyof RecipientFormData, e.target.value)} />
+                    <input className="form-input" type={f.type ?? 'text'} placeholder={f.placeholder} value={(form as unknown as Record<string, string>)[f.key]} onChange={e => setF(f.key as keyof RecipientFormData, e.target.value)} />
                   </div>
                 ))}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
