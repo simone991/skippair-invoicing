@@ -31,7 +31,7 @@ export default function Sidebar({ profile }: SidebarProps) {
     color: active(href) ? 'white' : 'rgba(255,255,255,.6)',
     background: active(href) ? 'rgba(0,180,160,.15)' : 'transparent',
     borderLeft: active(href) ? '2px solid var(--teal)' : '2px solid transparent',
-    fontSize: 13, cursor: 'pointer', textDecoration: 'none', transition: 'all .15s', display: 'flex',
+    fontSize: 13, cursor: 'pointer', textDecoration: 'none', transition: 'all .15s',
   })
 
   const Icon = ({ d }: { d: string }) => (
