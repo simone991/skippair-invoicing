@@ -58,7 +58,7 @@ async function convertToPdfCloudConvert(docxBuffer: Buffer): Promise<Buffer> {
 
   const form = new FormData()
   Object.entries(uploadTask.result.form.parameters as Record<string, string>).forEach(([k, v]) => form.append(k, v))
-  form.append('file', new Blob([docxBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), 'invoice.docx')
+  form.append('file', new Blob([new Uint8Array(docxBuffer)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), 'invoice.docx')
   await fetch(uploadTask.result.form.url, { method: 'POST', body: form })
 
   let pdfUrl: string | null = null
