@@ -200,6 +200,7 @@ export interface InvoiceFormData {
   client_total_price: string
 
   taxable_amount: string
+  send_to_email: string
 }
 
 export interface InvoiceAmounts {
