@@ -1,0 +1,204 @@
+{
+  "name": "Skippair — Generate Invoice",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "skippair-generate-invoice",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook — Receive Invoice Payload",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "REPLACE_WITH_YOUR_WEBHOOK_ID",
+      "notes": "Receives the full invoice payload from the Next.js API route"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Build DOCX template variables ──\nconst body = $input.first().json.body;\n\nconst lang = body.language || 'en';\nconst isFr = lang === 'fr';\n\n// Labels (bilingual)\nconst labels = {\n  invoiceTitle:     isFr ? 'FACTURE'              : 'INVOICE',\n  billTo:           isFr ? 'Facturé à'             : 'Billed to',\n  from:             isFr ? 'Émetteur'              : 'From',\n  description:      isFr ? 'Description'           : 'Description',\n  amount:           isFr ? 'Montant'               : 'Amount',\n  taxableAmount:    isFr ? 'Montant HT'            : 'Taxable amount',\n  vatLabel:         isFr ? `TVA (${body.amounts.vatRate}%)` : `VAT (${body.amounts.vatRate}%)`,\n  totalLabel:       isFr ? 'Total (TVA incluse)'   : 'Total (VAT incl.)',\n  serviceLabel:     isFr ? 'Prestation'            : 'Service',\n  typeLabel:        isFr ? 'Type'                  : 'Type',\n  boatLabel:        isFr ? 'Bateau'                : 'Boat',\n  datesLabel:       isFr ? 'Dates début / fin'     : 'Start / End dates',\n  portsLabel:       isFr ? 'Port départ / arrivée' : 'Starting / Landing Port',\n  travellersLabel:  isFr ? 'Nb. de voyageurs'      : 'Nb. of travellers',\n  priceLabel:       isFr ? 'Montant total client'  : \"Client's total amount\",\n};\n\n// Format amounts\nconst fmt = (n) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);\n\nconst desc = body.description;\nconst boatFull = [desc.boatModel, desc.boatYear ? `(${desc.boatYear})` : null].filter(Boolean).join(' ');\nconst datesFull = [desc.startDate, desc.endDate].filter(Boolean).join(' → ');\nconst portsFull = [desc.startingPort, desc.landingPort].filter(Boolean).join(' / ');\n\nreturn [{\n  json: {\n    // Pass-through for downstream nodes\n    ...body,\n\n    // Template variables for DOCX placeholders\n    INVOICE_TITLE:      labels.invoiceTitle,\n    INVOICE_NUMBER:     body.invoiceNumber,\n    INVOICE_DATE:       body.invoiceDate,\n    LANG:               lang,\n\n    // Recipient\n    BILL_TO_LABEL:      labels.billTo,\n    RECIPIENT_NAME:     body.recipient.name,\n    RECIPIENT_ADDRESS:  body.recipient.address,\n    RECIPIENT_COUNTRY:  body.recipient.country,\n    RECIPIENT_VAT:      body.recipient.vatNumber ? `VAT: ${body.recipient.vatNumber}` : '',\n\n    // Issuer\n    FROM_LABEL:         labels.from,\n    ISSUER_NAME:        body.issuer.name,\n    ISSUER_ADDRESS:     body.issuer.address,\n    ISSUER_PHONE:       body.issuer.phone,\n    ISSUER_EMAIL:       body.issuer.email,\n\n    // Description\n    DESC_LABEL:         labels.description,\n    AMOUNT_LABEL:       labels.amount,\n    SERVICE_LABEL:      labels.serviceLabel,\n    SERVICE_VALUE:      desc.serviceName,\n    TYPE_LABEL:         labels.typeLabel,\n    TYPE_VALUE:         desc.serviceType || '',\n    BOAT_LABEL:         labels.boatLabel,\n    BOAT_VALUE:         boatFull,\n    DATES_LABEL:        labels.datesLabel,\n    DATES_VALUE:        datesFull,\n    PORTS_LABEL:        labels.portsLabel,\n    PORTS_VALUE:        portsFull,\n    TRAVELLERS_LABEL:   labels.travellersLabel,\n    TRAVELLERS_VALUE:   desc.nbTravellers?.toString() || '',\n    PRICE_LABEL:        labels.priceLabel,\n    PRICE_VALUE:        desc.clientTotalPrice || '',\n\n    // Amounts\n    TAXABLE_LABEL:      labels.taxableAmount,\n    TAXABLE_VALUE:      `€${fmt(body.amounts.taxable)}`,\n    VAT_LABEL:          labels.vatLabel,\n    VAT_VALUE:          `€${fmt(body.amounts.vatAmount)}`,\n    TOTAL_LABEL:        labels.totalLabel,\n    TOTAL_VALUE:        `€${fmt(body.amounts.total)}`,\n    VAT_NOTE:           body.amounts.vatNote || '',\n\n    // Footer\n    FOOTER_TEXT:        body.footerText,\n\n    // PDF filename\n    PDF_FILENAME:       `${body.invoiceNumber}_${body.recipient.name.replace(/[^a-z0-9]/gi, '_')}.pdf`,\n  }\n}];"
+      },
+      "id": "prepare-variables",
+      "name": "Prepare template variables",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300],
+      "notes": "Builds all template variables for DOCX placeholders"
+    },
+    {
+      "parameters": {
+        "url": "https://docs.google.com/document/d/REPLACE_WITH_GOOGLE_DOC_TEMPLATE_ID/export?format=docx",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "fetch-template",
+      "name": "Fetch DOCX template from Drive",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300],
+      "notes": "Downloads the invoice template DOCX from Google Drive. Replace REPLACE_WITH_GOOGLE_DOC_TEMPLATE_ID with the actual Google Doc ID of your invoice template."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── Fill DOCX template placeholders ──\n// Uses docxtemplater to replace {{PLACEHOLDER}} in the DOCX\n// This node requires the 'docxtemplater' and 'pizzip' npm packages\n// installed in the n8n custom nodes directory.\n//\n// Alternative: use the HTTP Request node to call a serverless\n// function (Vercel Edge / Cloudflare Worker) that does the DOCX fill.\n//\n// For simplicity in n8n, the recommended approach is to use\n// a dedicated microservice or call a Vercel API route:\n// POST /api/generate-pdf with the full payload.\n//\n// The Vercel API route at /api/generate-pdf:\n//   1. Downloads the template\n//   2. Fills it with docxtemplater\n//   3. Converts to PDF with LibreOffice (via a conversion API)\n//   4. Returns the PDF as a buffer\n//\n// Returning pass-through here; actual PDF generation\n// is handled by the HTTP Request node below.\nreturn $input.all();"
+      },
+      "id": "fill-template-note",
+      "name": "Note: PDF generation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300],
+      "notes": "See the /api/generate-pdf route for actual PDF generation logic"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.NEXT_PUBLIC_APP_URL }}/api/generate-pdf",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "invoiceNumber": "={{ $json.invoiceNumber }}",
+          "language": "={{ $json.language }}",
+          "variables": "={{ JSON.stringify($json) }}"
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "call-pdf-api",
+      "name": "Call /api/generate-pdf",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 300],
+      "notes": "Calls the Next.js API route that generates the PDF from the DOCX template"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $('prepare-variables').item.json.PDF_FILENAME }}",
+        "parents": {
+          "values": [
+            {
+              "id": "={{ $('prepare-variables').item.json.gdriveFolderId }}"
+            }
+          ]
+        },
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "upload-to-drive",
+      "name": "Upload PDF to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1440, 300],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_GDRIVE_CREDENTIAL_ID",
+          "name": "Google Drive (Skippair)"
+        }
+      },
+      "notes": "Uploads the generated PDF to the configured Google Drive folder"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('prepare-variables').item.json.sendToEmail }}",
+        "subject": "={{ $('prepare-variables').item.json.emailSubject }}",
+        "message": "={{ $('prepare-variables').item.json.emailBody }}",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "data"
+              }
+            ]
+          }
+        }
+      },
+      "id": "send-email",
+      "name": "Send email with PDF",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1680, 300],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail (Skippair)"
+        }
+      },
+      "notes": "Sends the invoice email to the recipient with PDF attached"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": {
+          "success": true,
+          "driveFileId": "={{ $('upload-to-drive').item.json.id }}",
+          "driveFileUrl": "={{ 'https://drive.google.com/file/d/' + $('upload-to-drive').item.json.id + '/view' }}"
+        }
+      },
+      "id": "respond",
+      "name": "Respond to webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1920, 300],
+      "notes": "Returns the Drive file ID and URL to the Next.js app"
+    }
+  ],
+  "connections": {
+    "Webhook — Receive Invoice Payload": {
+      "main": [
+        [{ "node": "Prepare template variables", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare template variables": {
+      "main": [
+        [{ "node": "Note: PDF generation", "type": "main", "index": 0 }]
+      ]
+    },
+    "Note: PDF generation": {
+      "main": [
+        [{ "node": "Call /api/generate-pdf", "type": "main", "index": 0 }]
+      ]
+    },
+    "Call /api/generate-pdf": {
+      "main": [
+        [{ "node": "Upload PDF to Google Drive", "type": "main", "index": 0 }]
+      ]
+    },
+    "Upload PDF to Google Drive": {
+      "main": [
+        [{ "node": "Send email with PDF", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send email with PDF": {
+      "main": [
+        [{ "node": "Respond to webhook", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "_SETUP_NOTES": {
+    "1_webhook": "After importing, copy the Production webhook URL and set it as N8N_WEBHOOK_URL in Vercel env vars",
+    "2_gdrive_credentials": "Create a Google Drive OAuth2 credential in n8n with access to the invoices folder",
+    "3_gmail_credentials": "Create a Gmail OAuth2 credential in n8n for contact@skippair.com",
+    "4_pdf_generation": "The /api/generate-pdf Next.js route fills the DOCX template and converts it to PDF. See src/app/api/generate-pdf/route.ts",
+    "5_template": "Upload the CMSEA_Invoice_-_template.docx to Google Drive, convert it to Google Doc, and replace the template ID in the 'Fetch DOCX template' node",
+    "6_variables": "All {{PLACEHOLDER}} variables in the DOCX template must match the keys in the 'Prepare template variables' node"
+  }
+}
