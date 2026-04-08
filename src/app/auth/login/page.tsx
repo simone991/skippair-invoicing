@@ -30,7 +30,7 @@ function LoginForm() {
         setError('Your account has been disabled. Contact an administrator.')
         setLoading(false); return
       }
-      router.push(redirect); router.refresh()
+      window.location.href = redirect
     } catch (err) {
       console.error('Login error:', err)
       setError('An unexpected error occurred. Please try again.')
