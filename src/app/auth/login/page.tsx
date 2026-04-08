@@ -17,16 +17,25 @@ function LoginForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true); setError('')
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-    if (authError) { setError('Invalid email or password.'); setLoading(false); return }
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('status').eq('id', user!.id).single()
-    if (profile?.status === 'disabled') {
-      await supabase.auth.signOut()
-      setError('Your account has been disabled. Contact an administrator.')
-      setLoading(false); return
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      if (authError) { setError('Invalid email or password.'); setLoading(false); return }
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setError('Login failed. Please try again.'); setLoading(false); return }
+
+      const { data: profile } = await supabase.from('profiles').select('status').eq('id', user.id).single()
+      if (profile?.status === 'disabled') {
+        await supabase.auth.signOut()
+        setError('Your account has been disabled. Contact an administrator.')
+        setLoading(false); return
+      }
+      router.push(redirect); router.refresh()
+    } catch (err) {
+      console.error('Login error:', err)
+      setError('An unexpected error occurred. Please try again.')
+      setLoading(false)
     }
-    router.push(redirect); router.refresh()
   }
 
   return (
