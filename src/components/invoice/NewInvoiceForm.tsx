@@ -22,6 +22,7 @@ const EMPTY_FORM: InvoiceFormData = {
   invoice_date: new Date().toISOString().split('T')[0],
   language: 'en',
   quote_number: '',
+  is_test: false,
   recipient_id: '',
   recipient_name: '',
   recipient_address: '',
