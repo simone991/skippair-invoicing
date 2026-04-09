@@ -27,6 +27,8 @@ export default function RecipientsClient({ recipients: initial, userRole, openNe
   const [importResult, setImportResult] = useState<{ imported: number; skipped: number; errors: Array<{ row: number; reason: string }> } | null>(null)
   const [importing, setImporting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [countrySearch, setCountrySearch] = useState('')
+  const [countryOpen, setCountryOpen] = useState(false)
   const canWrite = userRole === 'manager' || userRole === 'admin'
   const canAdmin = userRole === 'admin'
 
@@ -48,10 +50,11 @@ export default function RecipientsClient({ recipients: initial, userRole, openNe
 
   const openEdit = (rec: Recipient) => {
     setForm({ name: rec.name, type: rec.type, address: rec.address, country_code: rec.country_code, country_name: rec.country_name, vat_zone: rec.vat_zone, vat_number: rec.vat_number ?? '', email: rec.email })
+    setCountrySearch(rec.country_name)
     setEditingId(rec.id); setFormErrors([]); setDupWarning(null); setShowAdd(true)
   }
 
-  const closeAdd = () => { setShowAdd(false); setForm(EMPTY); setFormErrors([]); setDupWarning(null); setEditingId(null) }
+  const closeAdd = () => { setShowAdd(false); setForm(EMPTY); setCountrySearch(''); setFormErrors([]); setDupWarning(null); setEditingId(null) }
 
   const saveRecipient = async (overwrite = false) => {
     const v = validateRecipientForm(form)
@@ -185,12 +188,37 @@ export default function RecipientsClient({ recipients: initial, userRole, openNe
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Country <span style={{ color: 'var(--red)' }}>*</span></label>
-                  <select className="form-select" value={form.country_code} onChange={e => handleCountry(e.target.value)}>
-                    <option value="">— Select —</option>
-                    <optgroup label="France">{COUNTRIES.filter(c => c.zone === 'fr').map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}</optgroup>
-                    <optgroup label="EU">{COUNTRIES.filter(c => c.zone === 'eu').map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}</optgroup>
-                    <optgroup label="Non-EU">{COUNTRIES.filter(c => c.zone === 'non-eu').map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}</optgroup>
-                  </select>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      className="form-input"
+                      placeholder="Type to search country…"
+                      autoComplete="off"
+                      value={countrySearch}
+                      onChange={e => { setCountrySearch(e.target.value); setCountryOpen(true) }}
+                      onFocus={() => setCountryOpen(true)}
+                      onBlur={() => setTimeout(() => setCountryOpen(false), 150)}
+                    />
+                    {countryOpen && (() => {
+                      const q = countrySearch.trim().toLowerCase()
+                      const matches = COUNTRIES.filter(c => !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+                      return (
+                        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'white', border: '1px solid var(--gray-200)', borderRadius: 'var(--radius)', boxShadow: '0 4px 12px rgba(0,0,0,.12)', maxHeight: 200, overflowY: 'auto' }}>
+                          {matches.length === 0
+                            ? <div style={{ padding: '8px 12px', fontSize: 13, color: 'var(--gray-400)' }}>No country found</div>
+                            : matches.map(c => (
+                              <div key={c.code}
+                                style={{ padding: '7px 12px', cursor: 'pointer', fontSize: 13, background: c.code === form.country_code ? 'var(--teal-light)' : 'white', display: 'flex', alignItems: 'center', gap: 6 }}
+                                onMouseDown={() => { handleCountry(c.code); setCountrySearch(c.name); setCountryOpen(false) }}
+                              >
+                                <span>{c.flag}</span><span>{c.name}</span><span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--gray-400)' }}>{c.code}</span>
+                              </div>
+                            ))
+                          }
+                        </div>
+                      )
+                    })()}
+                  </div>
+                  {form.country_code && <span style={{ fontSize: 11, color: 'var(--gray-400)' }}>Code: {form.country_code} · Zone: {form.vat_zone}</span>}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>VAT Number {vatReq && <span style={{ color: 'var(--red)' }}>*</span>}</label>

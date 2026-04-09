@@ -77,6 +77,11 @@ export default async function DashboardPage() {
       <td style={{ fontWeight: 600 }}>{formatEur(inv.total_amount)}</td>
       <td style={{ color: 'var(--gray-400)' }}>{new Date(inv.invoice_date).toLocaleDateString('fr-FR')}</td>
       <td><span className={`badge ${STATUS_BADGE[inv.status] ?? 'badge-gray'}`}>{inv.status}</span></td>
+      <td>
+        {inv.drive_file_url && (inv.status === 'issued' || inv.status === 'sent') && (
+          <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)', fontSize: 12, fontWeight: 500, textDecoration: 'none' }}>PDF ↗</a>
+        )}
+      </td>
     </tr>
   )
 
@@ -177,10 +182,10 @@ export default async function DashboardPage() {
                 <Link href="/invoices" style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>View all →</Link>
               </div>
               <table className="data-table">
-                <thead><tr><th>Invoice #</th><th>Recipient</th><th>Total</th><th>Date</th><th>Status</th></tr></thead>
+                <thead><tr><th>Invoice #</th><th>Recipient</th><th>Total</th><th>Date</th><th>Status</th><th></th></tr></thead>
                 <tbody>
                   {(recentInvoices as InvoiceLog[] ?? []).length === 0
-                    ? <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--gray-400)', padding: '20px 0' }}>No invoices yet</td></tr>
+                    ? <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--gray-400)', padding: '20px 0' }}>No invoices yet</td></tr>
                     : (recentInvoices as InvoiceLog[]).map(inv => <InvoiceRow key={inv.id} inv={inv} />)
                   }
                 </tbody>
@@ -206,9 +211,14 @@ export default async function DashboardPage() {
                 {(recentIssued as InvoiceLog[] ?? []).length === 0
                   ? <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>Nothing pending</div>
                   : (recentIssued as InvoiceLog[]).map(inv => (
-                    <div key={inv.id} style={{ fontSize: 12, padding: '6px 0', borderBottom: '1px solid var(--gray-100)', display: 'flex', justifyContent: 'space-between' }}>
+                    <div key={inv.id} style={{ fontSize: 12, padding: '6px 0', borderBottom: '1px solid var(--gray-100)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span className="inv-number">{inv.invoice_number}</span>
-                      <span style={{ fontWeight: 600, flexShrink: 0 }}>{formatEur(inv.total_amount)}</span>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                        {inv.drive_file_url && (
+                          <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)', fontSize: 11, fontWeight: 500, textDecoration: 'none' }}>PDF ↗</a>
+                        )}
+                        <span style={{ fontWeight: 600 }}>{formatEur(inv.total_amount)}</span>
+                      </div>
                     </div>
                   ))
                 }

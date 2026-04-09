@@ -62,16 +62,20 @@ export async function POST(req: NextRequest) {
     let skipped = 0
 
     body.rows.forEach((row: Record<string, string>, i: number) => {
-      const check = validateCsvRow(row, i + 2, vatSet)
+      // Normalize keys: trim whitespace and lowercase (handles headers like "Name", " name ", etc.)
+      const r: Record<string, string> = Object.fromEntries(
+        Object.entries(row).map(([k, v]) => [k.trim().toLowerCase(), typeof v === 'string' ? v : ''])
+      )
+      const check = validateCsvRow(r, i + 2, vatSet)
       if (!check.valid) { skipped++; errors.push({ row: i + 2, reason: check.error! }); return }
-      const vat = row.vat_number?.toUpperCase() || null
+      const vat = r.vat_number?.toUpperCase() || null
       if (vat) vatSet.add(vat)
       toInsert.push({
-        name: row.name!.trim(), type: (row.type as 'company' | 'private') ?? 'company',
-        address: row.address!.trim(), country_code: row.country_code!.toUpperCase(),
-        country_name: row.country_name?.trim() ?? row.country_code!.toUpperCase(),
-        vat_zone: getVatZone(row.country_code!.toUpperCase()),
-        vat_number: vat ?? '', email: row.email!.trim().toLowerCase(),
+        name: r.name!.trim(), type: (r.type as 'company' | 'private') ?? 'company',
+        address: r.address!.trim(), country_code: r.country_code!.toUpperCase(),
+        country_name: r.country_name?.trim() ?? r.country_code!.toUpperCase(),
+        vat_zone: getVatZone(r.country_code!.toUpperCase()),
+        vat_number: vat ?? '', email: r.email!.trim().toLowerCase(),
       })
     })
 
@@ -81,8 +85,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ result: { imported: toInsert.length, skipped, errors } })
   }
 
-  const overwrite = body._overwrite === true
-  const formData: RecipientFormData = { ...body, vat_zone: getVatZone(body.country_code) }
+  const { _overwrite, ...formFields } = body
+  const overwrite = _overwrite === true
+  const formData: RecipientFormData = { ...formFields, vat_zone: getVatZone(body.country_code) }
   const validation = validateRecipientForm(formData)
   if (!validation.valid) return NextResponse.json({ error: 'Validation failed', errors: validation.errors }, { status: 400 })
 
