@@ -65,18 +65,48 @@ export async function fetchQuoteFromSheets(quoteId: string, sheetId: string, tab
   return found ? rowToQuote(found) : null
 }
 
-export function quoteToDescriptionFields(quote: Quote) {
+// ── Translation maps for offer/boat type strings from Google Sheets ────────────────────
+// Keys = English strings as they appear in the spreadsheet.
+// Add/update entries here whenever you add new values to the sheet.
+const FIELD_TRANSLATIONS: Record<string, { fr: string }> = {
+  // Offer types — add your actual spreadsheet values here:
+  // 'Skippered charter':  { fr: 'Location avec skipper' },
+  // 'Bareboat charter':   { fr: 'Location sans équipage' },
+
+  // Boat types — add your actual spreadsheet values here:
+'Catamaran': { fr: 'Catamaran' },
+'Monohull': { fr: 'Monocoque' },
+'Trimaran': { fr: 'Trimaran' },
+'Gulet': { fr: 'Goélette' },
+'Motorboat': { fr: 'Bateau à moteur' },
+'Classic sailboat': { fr: 'Voilier classique' },
+'Luxury sailboat': { fr: 'Voilier de luxe' },
+}
+
+function translateField(value: string, lang: string): string {
+  if (!value || lang === 'en') return value
+  return FIELD_TRANSLATIONS[value]?.fr ?? value
+}
+
+function parsePrice(raw: string): string {
+  if (!raw?.trim()) return ''
+  const cleaned = raw.trim().replace(/\s/g, '').replace(',', '.')
+  const n = parseFloat(cleaned)
+  return isNaN(n) ? '' : `${n.toLocaleString('fr-FR')} EUR`
+}
+
+export function quoteToDescriptionFields(quote: Quote, lang = 'en') {
+  const offerType = translateField(quote.offerType || quote.boatType, lang)
+  const boatType  = translateField(quote.boatType, lang)
   return {
-    service_type: quote.offerType || quote.boatType,
-    boat_model:   [quote.model, quote.boatType].filter(Boolean).join(' · '),
-    boat_year:    quote.year,
-    start_date:   quote.start,
-    end_date:     quote.end,
+    service_type:  offerType,
+    boat_model:    [quote.model, boatType].filter(Boolean).join(' · '),
+    boat_year:     quote.year,
+    start_date:    quote.start,
+    end_date:      quote.end,
     starting_port: quote.startingPort,
     landing_port:  quote.landingPort,
     nb_travellers: quote.travellers,
-    client_total_price: quote.globalPrice
-      ? `${Number(quote.globalPrice).toLocaleString('fr-FR')} EUR`
-      : quote.price ? `${Number(quote.price).toLocaleString('fr-FR')} EUR` : '',
+    client_total_price: parsePrice(quote.globalPrice) || parsePrice(quote.price),
   }
 }

@@ -124,7 +124,7 @@ export async function PATCH(req: NextRequest) {
   if (disabled !== undefined) updates.disabled = disabled
   if (rest.name) updates.name = rest.name
   if (rest.address) updates.address = rest.address
-  if (rest.email) updates.email = rest.email
+  if ('email' in rest) updates.email = rest.email ?? ''
   if (rest.vat_number !== undefined) updates.vat_number = rest.vat_number?.toUpperCase() || null
 
   const { data, error } = await supabase.from('recipients').update(updates).eq('id', id).select().single()

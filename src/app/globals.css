@@ -88,6 +88,11 @@ body { font-family: var(--font-sans); background: var(--gray-50); color: var(--g
 ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
+/* Hide number input spin buttons */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
 @media (max-width: 900px) {
   .sidebar { width: 56px; }
   .main-content { margin-left: 56px; }

@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const quoteId = searchParams.get('id')
+  const lang    = searchParams.get('lang') ?? 'en'
   if (!quoteId) return NextResponse.json({ error: 'Quote ID required' }, { status: 400 })
 
   const { data: settings } = await supabase.from('settings').select('gsheet_id, gsheet_tab').eq('id', 1).single()
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
   try {
     const quote = await fetchQuoteFromSheets(quoteId, settings.gsheet_id, settings.gsheet_tab)
     if (!quote) return NextResponse.json({ error: `Quote "${quoteId}" not found` }, { status: 404 })
-    return NextResponse.json({ quote, fields: quoteToDescriptionFields(quote) })
+    return NextResponse.json({ quote, fields: quoteToDescriptionFields(quote, lang) })
   } catch (err: unknown) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 })
   }

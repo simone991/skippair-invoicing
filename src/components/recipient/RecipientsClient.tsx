@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Recipient, RecipientFormData, VatZone, RecipientType } from '@/types'
 import { COUNTRIES, getVatZone } from '@/lib/countries'
 import { isVatRequired } from '@/lib/vat'
@@ -7,11 +8,12 @@ import { validateRecipientForm } from '@/lib/validation'
 import { Search, Plus, Upload, X, AlertCircle, CheckCircle } from 'lucide-react'
 import Papa from 'papaparse'
 
-interface Props { recipients: Recipient[]; userRole: string; openNewOnLoad?: boolean }
+interface Props { recipients: Recipient[]; userRole: string; openNewOnLoad?: boolean; returnTo?: string }
 
 const EMPTY: RecipientFormData = { name: '', type: 'company', address: '', country_code: '', country_name: '', vat_zone: 'non-eu', vat_number: '', email: '' }
 
-export default function RecipientsClient({ recipients: initial, userRole, openNewOnLoad }: Props) {
+export default function RecipientsClient({ recipients: initial, userRole, openNewOnLoad, returnTo }: Props) {
+  const router = useRouter()
   const [recipients, setRecipients] = useState(initial)
   const [search, setSearch] = useState('')
   const [filterCountry, setFilterCountry] = useState('')
@@ -55,6 +57,7 @@ export default function RecipientsClient({ recipients: initial, userRole, openNe
   }
 
   const closeAdd = () => { setShowAdd(false); setForm(EMPTY); setCountrySearch(''); setFormErrors([]); setDupWarning(null); setEditingId(null) }
+  const cancelAdd = () => { closeAdd(); if (returnTo) router.push(returnTo) }
 
   const saveRecipient = async (overwrite = false) => {
     const v = validateRecipientForm(form)
@@ -161,11 +164,11 @@ export default function RecipientsClient({ recipients: initial, userRole, openNe
 
       {/* Add/Edit modal */}
       {showAdd && (
-        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) closeAdd() }}>
+        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) cancelAdd() }}>
           <div className="modal">
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}>
               <span style={{ fontSize: 15, fontWeight: 600 }}>{editingId ? 'Edit recipient' : 'New recipient'}</span>
-              <button className="btn btn-ghost btn-sm" onClick={closeAdd}><X size={16} /></button>
+              <button className="btn btn-ghost btn-sm" onClick={cancelAdd}><X size={16} /></button>
             </div>
             <div style={{ padding: 24 }}>
               {formErrors.length > 0 && <div className="alert alert-error" style={{ marginBottom: 14 }}><AlertCircle size={14} style={{ flexShrink: 0 }} /><ul style={{ paddingLeft: 16 }}>{formErrors.map((e, i) => <li key={i}>{e}</li>)}</ul></div>}
@@ -239,7 +242,7 @@ export default function RecipientsClient({ recipients: initial, userRole, openNe
               </div>
             </div>
             <div style={{ padding: '16px 24px', borderTop: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'flex-end', gap: 8, position: 'sticky', bottom: 0, background: 'white' }}>
-              <button className="btn btn-outline" onClick={closeAdd} disabled={saving}>Cancel</button>
+              <button className="btn btn-outline" onClick={cancelAdd} disabled={saving}>Cancel</button>
               <button className="btn btn-teal" onClick={() => saveRecipient(false)} disabled={saving}>
                 {saving ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,.4)', borderTopColor: 'white' }} />Saving…</> : <><CheckCircle size={13} />{editingId ? 'Save' : 'Add recipient'}</>}
               </button>

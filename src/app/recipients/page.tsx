@@ -4,7 +4,7 @@ import Sidebar from '@/components/ui/Sidebar'
 import RecipientsClient from '@/components/recipient/RecipientsClient'
 import { Profile, Recipient } from '@/types'
 
-export default async function RecipientsPage({ searchParams }: { searchParams: { new?: string } }) {
+export default async function RecipientsPage({ searchParams }: { searchParams: { new?: string; returnTo?: string } }) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -17,7 +17,7 @@ export default async function RecipientsPage({ searchParams }: { searchParams: {
       <div className="main-content">
         <div className="topbar"><div style={{ fontSize: 16, fontWeight: 600 }}>Recipients</div></div>
         <div className="page-content">
-          <RecipientsClient recipients={(recipients ?? []) as Recipient[]} userRole={profile.role} openNewOnLoad={searchParams.new === '1'} />
+          <RecipientsClient recipients={(recipients ?? []) as Recipient[]} userRole={profile.role} openNewOnLoad={searchParams.new === '1'} returnTo={searchParams.returnTo} />
         </div>
       </div>
     </div>

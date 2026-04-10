@@ -15,6 +15,14 @@ import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
+// ── Service types — add new invoice types here ────────────────────────────────────────────
+const SERVICE_TYPES = [
+  { key: 'agency_commission', en: 'Broker fees', fr: 'Frais d'agence' },
+  // Add more types here, e.g.:
+  // { key: 'boat_rental', en: 'Boat rental', fr: 'Location de bateau' },
+] as const
+type ServiceKey = typeof SERVICE_TYPES[number]['key'] | ''
+
 const STEP_LABELS = ['Quote / Data', 'Recipient', 'VAT Check', 'Preview', 'Save Draft', 'Issue', 'Send']
 
 interface Props { settings: Settings; userRole: 'manager' | 'admin' }
@@ -61,8 +69,23 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
 
+  const [serviceKey, setServiceKey] = useState<ServiceKey>('')
   const [showPreview, setShowPreview] = useState(false)
   const supabase = createClient()
+
+  // Restore wizard state if returning from /recipients
+  useState(() => {
+    if (typeof window === 'undefined') return
+    const saved = sessionStorage.getItem('invoiceWizardState')
+    if (saved) {
+      try {
+        const { form: f, step: s, serviceKey: sk } = JSON.parse(saved)
+        setForm(f); setStep(s as Step)
+        if (sk) setServiceKey(sk as ServiceKey)
+      } catch { /* ignore */ }
+      sessionStorage.removeItem('invoiceWizardState')
+    }
+  })
 
   const setF = (k: keyof InvoiceFormData, v: string | boolean) =>
     setForm(f => ({ ...f, [k]: v }))
@@ -72,7 +95,7 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
     if (!form.quote_number.trim()) return
     setFetchingQuote(true); setQuoteError(''); setQuoteFetched(false)
     try {
-      const res = await fetch(`/api/quotes?id=${encodeURIComponent(form.quote_number.trim())}`)
+      const res = await fetch(`/api/quotes?id=${encodeURIComponent(form.quote_number.trim())}&lang=${form.language}`)
       const data = await res.json()
       if (!res.ok) { setQuoteError(data.error); return }
       const f = data.fields
@@ -221,7 +244,14 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Language <span style={{ color: 'var(--red)' }}>*</span></label>
-                <select className="form-select" value={form.language} onChange={e => setF('language', e.target.value as InvoiceLanguage)}>
+                <select className="form-select" value={form.language} onChange={e => {
+                  const newLang = e.target.value as InvoiceLanguage
+                  setF('language', newLang)
+                  if (serviceKey) {
+                    const found = SERVICE_TYPES.find(s => s.key === serviceKey)
+                    if (found) setF('service_name', newLang === 'fr' ? found.fr : found.en)
+                  }
+                }}>
                   <option value="en">English</option>
                   <option value="fr">Français</option>
                 </select>
@@ -260,8 +290,18 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
             )}
             <div style={{ display: 'grid', gap: 12 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Service name <span style={{ color: 'var(--red)' }}>*</span></label>
-                <input className="form-input" value={form.service_name} onChange={e => setF('service_name', e.target.value)} />
+                <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Invoice type <span style={{ color: 'var(--red)' }}>*</span></label>
+                <select className="form-select" value={serviceKey} onChange={e => {
+                  const key = e.target.value as ServiceKey
+                  setServiceKey(key)
+                  const found = SERVICE_TYPES.find(s => s.key === key)
+                  if (found) setF('service_name', form.language === 'fr' ? found.fr : found.en)
+                }}>
+                  <option value="">— Select invoice type —</option>
+                  {SERVICE_TYPES.map(s => (
+                    <option key={s.key} value={s.key}>{form.language === 'fr' ? s.fr : s.en}</option>
+                  ))}
+                </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -303,14 +343,14 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Taxable amount (€) <span style={{ color: 'var(--red)' }}>*</span></label>
-                <input className={`form-input ${fieldError('taxable_amount') ? 'error' : ''}`} type="number" step="0.01" value={form.taxable_amount} onChange={e => setF('taxable_amount', e.target.value)} placeholder="450.00" style={{ maxWidth: 200 }} />
+                <input className={`form-input ${fieldError('taxable_amount') ? 'error' : ''}`} type="text" inputMode="decimal" value={form.taxable_amount} onChange={e => setF('taxable_amount', e.target.value)} placeholder="450.00" style={{ maxWidth: 200 }} />
                 {fieldError('taxable_amount') && <span style={{ fontSize: 11, color: 'var(--red)' }}>{fieldError('taxable_amount')}</span>}
               </div>
             </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-            <button className="btn btn-teal" onClick={() => setStep(2)} disabled={!form.service_name || !form.taxable_amount}>
+            <button className="btn btn-teal" onClick={() => setStep(2)} disabled={!serviceKey || !form.taxable_amount}>
               Next: Recipient →
             </button>
           </div>
@@ -379,9 +419,16 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
 
             {(userRole === 'manager' || userRole === 'admin') && (
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--gray-100)' }}>
-                <a href="/recipients?new=1" style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{ color: 'var(--teal)', padding: 0, fontSize: 12 }}
+                  onClick={() => {
+                    sessionStorage.setItem('invoiceWizardState', JSON.stringify({ form, step, serviceKey }))
+                    router.push('/recipients?new=1&returnTo=/invoices/new')
+                  }}
+                >
                   <Plus size={12} /> Add new recipient
-                </a>
+                </button>
               </div>
             )}
           </div>

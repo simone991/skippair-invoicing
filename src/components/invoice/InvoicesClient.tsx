@@ -24,6 +24,7 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
   const [activeInvoice, setActiveInvoice] = useState<InvoiceLog | null>(null)
   const [sendEmailList, setSendEmailList] = useState<string[]>([])
   const [newSendEmail, setNewSendEmail] = useState('')
+  const [issuingId, setIssuingId] = useState<string | null>(null)
   const [sendingAction, setSendingAction] = useState(false)
   const [actionError, setActionError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
@@ -53,7 +54,7 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
   }
 
   const handleIssue = async (inv: InvoiceLog) => {
-    setSendingAction(true); setActionError(''); setActionSuccess('')
+    setIssuingId(inv.id); setActionError('')
     try {
       const res = await fetch('/api/invoices/issue', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -62,7 +63,7 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
       const data = await res.json()
       if (!res.ok) { setActionError(data.error ?? 'Issue failed'); return }
       window.location.reload()
-    } finally { setSendingAction(false) }
+    } finally { setIssuingId(null) }
   }
 
   const openSend = (inv: InvoiceLog) => {
@@ -186,8 +187,11 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
                   </td>
                   <td>
                     {inv.status === 'draft' && (
-                      <button className="btn btn-outline btn-sm" onClick={() => handleIssue(inv)} disabled={sendingAction} title="Assign number and generate PDF">
-                        <Zap size={12} /> Issue
+                      <button className="btn btn-outline btn-sm" onClick={() => handleIssue(inv)} disabled={issuingId === inv.id} title="Assign number and generate PDF">
+                        {issuingId === inv.id
+                          ? <><div className="spinner" style={{ width: 12, height: 12 }} /> Issuing…</>
+                          : <><Zap size={12} /> Issue</>
+                        }
                       </button>
                     )}
                     {inv.status === 'issued' && inv.recipient_email && (
