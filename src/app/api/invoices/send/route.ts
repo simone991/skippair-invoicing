@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       recipient: {
         name: invoice.recipient_name, address: invoice.recipient_address,
         country: invoice.recipient_country, vatNumber: invoice.recipient_vat_number,
-        email: invoice.recipient_email, vatZone: invoice.recipient_vat_zone,
+        email: emails.join(', '), vatZone: invoice.recipient_vat_zone,
       },
       issuer: {
         name: settings.issuer_name, address: settings.issuer_address,
