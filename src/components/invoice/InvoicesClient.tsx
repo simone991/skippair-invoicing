@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react'
 import { InvoiceLog, InvoiceFilters, InvoiceStatus, CsvPeriodPreset } from '@/types'
 import { formatEur } from '@/lib/vat'
 import { downloadCsv, invoicesToCsv, getPresetDateRange, PRESET_LABELS } from '@/lib/csv-export'
-import { Search, Download, Trash2, X, FileDown, Ban } from 'lucide-react'
+import { Search, Download, Trash2, X, FileDown, Ban, Send, Zap, Plus, AlertCircle, CheckCircle } from 'lucide-react'
 
 const STATUS_BADGE: Record<InvoiceStatus, string> = {
   draft: 'badge-gray', issued: 'badge-amber', sent: 'badge-green', cancelled: 'badge-red'
@@ -20,6 +20,13 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
   const [csvFrom, setCsvFrom] = useState('')
   const [csvTo, setCsvTo] = useState('')
   const [acting, setActing] = useState(false)
+  const [showSendModal, setShowSendModal] = useState(false)
+  const [activeInvoice, setActiveInvoice] = useState<InvoiceLog | null>(null)
+  const [sendEmailList, setSendEmailList] = useState<string[]>([])
+  const [newSendEmail, setNewSendEmail] = useState('')
+  const [sendingAction, setSendingAction] = useState(false)
+  const [actionError, setActionError] = useState('')
+  const [actionSuccess, setActionSuccess] = useState('')
 
   const setF = (k: keyof InvoiceFilters, v: string) => setFilters(f => ({ ...f, [k]: v }))
 
@@ -43,6 +50,47 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
     await fetch('/api/invoices/bulk', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: Array.from(selected) }) })
     setActing(false); setShowCancelConfirm(false); setSelected(new Set())
     window.location.reload()
+  }
+
+  const handleIssue = async (inv: InvoiceLog) => {
+    setSendingAction(true); setActionError(''); setActionSuccess('')
+    try {
+      const res = await fetch('/api/invoices/issue', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceId: inv.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setActionError(data.error ?? 'Issue failed'); return }
+      window.location.reload()
+    } finally { setSendingAction(false) }
+  }
+
+  const openSend = (inv: InvoiceLog) => {
+    setActiveInvoice(inv)
+    setSendEmailList(inv.recipient_email ? [inv.recipient_email] : [])
+    setNewSendEmail(''); setActionError(''); setActionSuccess('')
+    setShowSendModal(true)
+  }
+
+  const addSendEmail = () => {
+    const e = newSendEmail.trim().toLowerCase()
+    if (e && !sendEmailList.includes(e)) setSendEmailList(prev => [...prev, e])
+    setNewSendEmail('')
+  }
+
+  const handleSend = async () => {
+    if (!activeInvoice || sendEmailList.length === 0) return
+    setSendingAction(true); setActionError('')
+    try {
+      const res = await fetch('/api/invoices/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceId: activeInvoice.id, emails: sendEmailList }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setActionError(data.error ?? 'Send failed'); return }
+      setShowSendModal(false)
+      window.location.reload()
+    } finally { setSendingAction(false) }
   }
 
   const handleDownload = () => {
@@ -106,11 +154,11 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
             <thead><tr>
               <th style={{ width: 36 }}><input type="checkbox" style={{ width: 16, height: 16, accentColor: 'var(--teal)', cursor: 'pointer' }} checked={selected.size === filtered.length && filtered.length > 0} onChange={e => toggleAll(e.target.checked)} /></th>
               <th>Invoice #</th><th>Date</th><th>Recipient</th><th>Country</th>
-              <th>Taxable</th><th>VAT</th><th>Total</th><th>Lang</th><th>Status</th><th>Drive</th>
+              <th>Taxable</th><th>VAT</th><th>Total</th><th>Lang</th><th>Status</th><th>Drive</th><th>Actions</th>
             </tr></thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={11} style={{ textAlign: 'center', color: 'var(--gray-400)', padding: '40px 0' }}>No invoices found.</td></tr>
+                <tr><td colSpan={12} style={{ textAlign: 'center', color: 'var(--gray-400)', padding: '40px 0' }}>No invoices found.</td></tr>
               ) : filtered.map(inv => (
                 <tr key={inv.id} style={{ background: selected.has(inv.id) ? 'var(--teal-light)' : inv.status === 'cancelled' ? 'var(--red-light)' : inv.is_test ? 'var(--amber-light)' : undefined }}>
                   <td><input type="checkbox" style={{ width: 16, height: 16, accentColor: 'var(--teal)', cursor: 'pointer' }} checked={selected.has(inv.id)} onChange={() => toggleOne(inv.id)} /></td>
@@ -134,6 +182,21 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
                       <a href={inv.drive_file_url} target="_blank" rel="noopener noreferrer">
                         <button className="btn btn-ghost btn-sm" title="Open in Drive"><Download size={12} /></button>
                       </a>
+                    )}
+                  </td>
+                  <td>
+                    {inv.status === 'draft' && (
+                      <button className="btn btn-outline btn-sm" onClick={() => handleIssue(inv)} disabled={sendingAction} title="Assign number and generate PDF">
+                        <Zap size={12} /> Issue
+                      </button>
+                    )}
+                    {inv.status === 'issued' && inv.recipient_email && (
+                      <button className="btn btn-teal btn-sm" onClick={() => openSend(inv)} title="Send by email">
+                        <Send size={12} /> Send
+                      </button>
+                    )}
+                    {inv.status === 'issued' && !inv.recipient_email && (
+                      <span style={{ fontSize: 11, color: 'var(--gray-400)', fontStyle: 'italic' }}>No email</span>
                     )}
                   </td>
                 </tr>
@@ -160,6 +223,49 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
               <button className="btn btn-outline" onClick={() => setShowCancelConfirm(false)} disabled={acting}>Cancel</button>
               <button className="btn btn-danger" onClick={handleCancel} disabled={acting}>
                 {acting ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,.4)', borderTopColor: 'white' }} />Processing…</> : <><Ban size={13} /> Confirm cancel</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send modal */}
+      {showSendModal && activeInvoice && (
+        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) setShowSendModal(false) }}>
+          <div className="modal" style={{ maxWidth: 480 }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 15, fontWeight: 600 }}>Send invoice <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--teal-mid)' }}>{activeInvoice.invoice_number}</span></span>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowSendModal(false)}><X size={16} /></button>
+            </div>
+            <div style={{ padding: 24 }}>
+              <div className="alert alert-info" style={{ marginBottom: 16, fontSize: 12 }}>
+                Recipient: <strong>{activeInvoice.recipient_name}</strong>
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                <input className="form-input" type="email" placeholder="Add email address…" value={newSendEmail}
+                  onChange={e => setNewSendEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && addSendEmail()} />
+                <button className="btn btn-outline btn-sm" onClick={addSendEmail} style={{ flexShrink: 0 }}><Plus size={13} /> Add</button>
+              </div>
+              {sendEmailList.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                  {sendEmailList.map(em => (
+                    <span key={em} className="badge badge-navy" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {em}
+                      <button onClick={() => setSendEmailList(prev => prev.filter(e => e !== em))}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, display: 'flex' }}>
+                        <X size={10} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {actionError && <div className="alert alert-error"><AlertCircle size={14} style={{ flexShrink: 0 }} />{actionError}</div>}
+              {actionSuccess && <div className="alert alert-success"><CheckCircle size={14} style={{ flexShrink: 0 }} />{actionSuccess}</div>}
+            </div>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button className="btn btn-outline" onClick={() => setShowSendModal(false)} disabled={sendingAction}>Cancel</button>
+              <button className="btn btn-teal" onClick={handleSend} disabled={sendingAction || sendEmailList.length === 0}>
+                {sendingAction ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,.4)', borderTopColor: 'white' }} />Sending…</> : <><Send size={13} /> Send invoice</>}
               </button>
             </div>
           </div>
