@@ -70,8 +70,8 @@ export async function fetchQuoteFromSheets(quoteId: string, sheetId: string, tab
 // Add/update entries here whenever you add new values to the sheet.
 const FIELD_TRANSLATIONS: Record<string, { fr: string }> = {
   // Offer types — add your actual spreadsheet values here:
-  // 'Skippered charter':  { fr: 'Location avec skipper' },
-  // 'Bareboat charter':   { fr: 'Location sans équipage' },
+'Boat with crew':  { fr: 'Voilier avec équipage' },
+'Bareboat charter':   { fr: 'Location sans équipage' },
 
   // Boat types — add your actual spreadsheet values here:
 'Catamaran': { fr: 'Catamaran' },
