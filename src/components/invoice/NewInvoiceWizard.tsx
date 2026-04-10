@@ -264,7 +264,7 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
                   <input className="form-input" type="text" placeholder="Q-2025-001" value={form.quote_number}
                     onChange={e => { setF('quote_number', e.target.value); setQuoteFetched(false); setQuoteError('') }}
                     onKeyDown={e => e.key === 'Enter' && fetchQuote()} />
-                  <button className="btn btn-outline btn-sm" onClick={fetchQuote} disabled={fetchingQuote || !form.quote_number.trim()} style={{ flexShrink: 0 }}>
+                  <button className="btn btn-outline btn-sm" onClick={() => fetchQuote()} disabled={fetchingQuote || !form.quote_number.trim()} style={{ flexShrink: 0 }}>
                     {fetchingQuote ? <div className="spinner" style={{ width: 12, height: 12 }} /> : <RefreshCw size={13} />}
                   </button>
                 </div>
