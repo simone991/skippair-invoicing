@@ -17,7 +17,7 @@ type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 // ── Service types — add new invoice types here ────────────────────────────────────────────
 const SERVICE_TYPES = [
-  { key: 'agency_commission', en: 'Broker fees', fr: 'Frais d'agence' },
+  { key: 'agency_commission', en: 'Broker fees', fr: "Frais d'agence" },
   // Add more types here, e.g.:
   // { key: 'boat_rental', en: 'Boat rental', fr: 'Location de bateau' },
 ] as const
