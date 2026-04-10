@@ -31,8 +31,7 @@ export function validateRecipientForm(data: RecipientFormData): ValidationResult
   if (!data.type)            errors.push({ field: 'type',    message: 'Type is required.' })
   if (!data.address?.trim()) errors.push({ field: 'address', message: 'Address is required.' })
   if (!data.country_code)    errors.push({ field: 'country_code', message: 'Country is required.' })
-  if (!data.email?.trim())   errors.push({ field: 'email',   message: 'Email is required.' })
-  else if (!isValidEmail(data.email)) errors.push({ field: 'email', message: 'Invalid email address.' })
+  if (data.email?.trim() && !isValidEmail(data.email)) errors.push({ field: 'email', message: 'Invalid email address.' })
   if (isVatRequired(data.vat_zone as VatZone, data.type as RecipientType)) {
     if (!data.vat_number?.trim()) errors.push({ field: 'vat_number', message: 'VAT number required for EU companies.' })
   }
@@ -46,7 +45,7 @@ export function validateCsvRow(row: CsvRow, rowIndex: number, existingVats: Set<
   if (!['company', 'private'].includes(row.type ?? '')) return { valid: false, error: `Row ${rowIndex}: type must be "company" or "private"` }
   if (!row.address?.trim()) return { valid: false, error: `Row ${rowIndex}: missing address` }
   if (!row.country_code || row.country_code.length !== 2) return { valid: false, error: `Row ${rowIndex}: invalid country code "${row.country_code}"` }
-  if (!row.email?.trim() || !isValidEmail(row.email)) return { valid: false, error: `Row ${rowIndex}: invalid email "${row.email}"` }
+  if (row.email?.trim() && !isValidEmail(row.email)) return { valid: false, error: `Row ${rowIndex}: invalid email "${row.email}"` }
   if (row.vat_number && existingVats.has(row.vat_number.toUpperCase())) return { valid: false, error: `Row ${rowIndex}: duplicate VAT ${row.vat_number}` }
   return { valid: true }
 }

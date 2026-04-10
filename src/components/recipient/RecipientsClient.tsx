@@ -173,7 +173,7 @@ export default function RecipientsClient({ recipients: initial, userRole, openNe
                 {[
                   { label: 'Name / Company', key: 'name', req: true, placeholder: 'Navi-Gate GmbH' },
                   { label: 'Address', key: 'address', req: true, placeholder: 'Street, City, Postal code' },
-                  { label: 'Email', key: 'email', req: true, placeholder: 'contact@company.com', type: 'email' },
+                  { label: 'Email', key: 'email', req: false, placeholder: 'contact@company.com', type: 'email' },
                 ].map(f => (
                   <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                     <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>{f.label} {f.req && <span style={{ color: 'var(--red)' }}>*</span>}</label>

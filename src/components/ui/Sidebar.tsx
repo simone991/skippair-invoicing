@@ -29,7 +29,7 @@ export default function Sidebar({ profile }: SidebarProps) {
   const itemStyle = (href: string) => ({
     display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px',
     color: active(href) ? 'white' : 'rgba(255,255,255,.6)',
-    background: active(href) ? 'rgba(0,180,160,.15)' : 'transparent',
+    background: active(href) ? 'rgba(0,204,204,.15)' : 'transparent',
     borderLeft: active(href) ? '2px solid var(--teal)' : '2px solid transparent',
     fontSize: 13, cursor: 'pointer', textDecoration: 'none', transition: 'all .15s',
   })
@@ -44,9 +44,8 @@ export default function Sidebar({ profile }: SidebarProps) {
     <aside className="sidebar">
       <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, background: 'var(--teal)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" style={{ width: 16, height: 16 }}><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon.svg" alt="Skippair" style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0 }} />
           <div className="sidebar-label">
             <div style={{ color: 'white', fontSize: 15, fontWeight: 600 }}>Skippair</div>
             <div style={{ color: 'rgba(255,255,255,.4)', fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase' }}>Invoicing</div>

@@ -115,7 +115,7 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
       recipient_country_code: rec.country_code, recipient_vat_number: rec.vat_number ?? '',
       recipient_email: rec.email, recipient_type: rec.type, recipient_vat_zone: rec.vat_zone,
     }))
-    setEmailList([rec.email])
+    setEmailList(rec.email ? [rec.email] : [])
   }
 
   // ── Amounts ─────────────────────────────────────────────────
@@ -545,36 +545,54 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
               <CheckCircle size={14} style={{ flexShrink: 0 }} />
               Invoice <strong>{savedInvoice.invoice_number}</strong> issued and PDF saved to Drive.
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Send via email</div>
-            <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-              <input className="form-input" type="email" placeholder="Add email address" value={newEmail}
-                onChange={e => setNewEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && addEmail()} />
-              <button className="btn btn-outline btn-sm" onClick={addEmail} style={{ flexShrink: 0 }}>
-                <Plus size={13} /> Add
-              </button>
-            </div>
-            {emailList.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-                {emailList.map(em => (
-                  <span key={em} className="badge badge-navy" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    {em}
-                    <button onClick={() => setEmailList(prev => prev.filter(e => e !== em))}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, display: 'flex' }}>
-                      <X size={10} />
-                    </button>
-                  </span>
-                ))}
+            {!savedInvoice.recipient_email ? (
+              <div className="alert alert-warning">
+                <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                <div>
+                  This recipient has no email address — the invoice cannot be sent via the app.
+                  {savedInvoice.drive_file_url && (
+                    <div style={{ marginTop: 8 }}>
+                      <a href={savedInvoice.drive_file_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)', fontWeight: 500 }}>Open PDF in Drive ↗</a>
+                    </div>
+                  )}
+                </div>
               </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Send via email</div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  <input className="form-input" type="email" placeholder="Add email address" value={newEmail}
+                    onChange={e => setNewEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && addEmail()} />
+                  <button className="btn btn-outline btn-sm" onClick={addEmail} style={{ flexShrink: 0 }}>
+                    <Plus size={13} /> Add
+                  </button>
+                </div>
+                {emailList.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                    {emailList.map(em => (
+                      <span key={em} className="badge badge-navy" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        {em}
+                        <button onClick={() => setEmailList(prev => prev.filter(e => e !== em))}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0, display: 'flex' }}>
+                          <X size={10} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {sendError && <div className="alert alert-error" style={{ marginBottom: 12 }}><AlertCircle size={14} />{sendError}</div>}
+              </>
             )}
-            {sendError && <div className="alert alert-error" style={{ marginBottom: 12 }}><AlertCircle size={14} />{sendError}</div>}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
             <button className="btn btn-outline" onClick={() => router.push(`/invoices?success=${savedInvoice.invoice_number}`)}>
-              Skip sending
+              {savedInvoice.recipient_email ? 'Skip sending' : 'Done'}
             </button>
-            <button className="btn btn-teal" onClick={sendInvoice} disabled={sending || emailList.length === 0}>
-              {sending ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,.4)', borderTopColor: 'white' }} />Sending…</> : <><Send size={14} />Send invoice</>}
-            </button>
+            {savedInvoice.recipient_email && (
+              <button className="btn btn-teal" onClick={sendInvoice} disabled={sending || emailList.length === 0}>
+                {sending ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,.4)', borderTopColor: 'white' }} />Sending…</> : <><Send size={14} />Send invoice</>}
+              </button>
+            )}
           </div>
         </div>
       )}

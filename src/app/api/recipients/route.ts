@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
         address: r.address!.trim(), country_code: r.country_code!.toUpperCase(),
         country_name: r.country_name?.trim() ?? r.country_code!.toUpperCase(),
         vat_zone: getVatZone(r.country_code!.toUpperCase()),
-        vat_number: vat ?? '', email: r.email!.trim().toLowerCase(),
+        vat_number: vat ?? '', email: r.email?.trim().toLowerCase() ?? '',
       })
     })
 

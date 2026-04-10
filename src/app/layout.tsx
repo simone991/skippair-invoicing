@@ -8,6 +8,7 @@ const dmMono = DM_Mono({ subsets: ['latin'], variable: '--font-dm-mono', weight:
 export const metadata: Metadata = {
   title: 'Skippair Invoicing',
   description: 'Invoice management for CMSea SAS - Skippair',
+  icons: { icon: '/icon.svg' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
