@@ -194,12 +194,12 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
                         }
                       </button>
                     )}
-                    {inv.status === 'issued' && inv.recipient_email && (
+                    {(inv.status === 'issued' || inv.status === 'sent') && inv.recipient_email && (
                       <button className="btn btn-teal btn-sm" onClick={() => openSend(inv)} title="Send by email">
                         <Send size={12} /> Send
                       </button>
                     )}
-                    {inv.status === 'issued' && !inv.recipient_email && (
+                    {(inv.status === 'issued' || inv.status === 'sent') && !inv.recipient_email && (
                       <span style={{ fontSize: 11, color: 'var(--gray-400)', fontStyle: 'italic' }}>No email</span>
                     )}
                   </td>

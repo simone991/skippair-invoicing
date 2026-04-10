@@ -4,11 +4,29 @@ import { formatEur, vatLabel } from '@/lib/vat'
 import { X, Download, Save } from 'lucide-react'
 
 const I18N = {
-  en: { invoice: 'INVOICE', billTo: 'Billed to', from: 'From', description: 'Description', amount: 'Amount', taxable: 'Taxable amount', total: 'Total (VAT incl.)', service: 'Service', type: 'Type', boat: 'Boat', dates: 'Start / End dates', ports: 'Starting / Landing Port', travellers: 'Nb. of travellers', price: "Client's total amount" },
-  fr: { invoice: 'FACTURE', billTo: 'Facturé à', from: 'Émetteur', description: 'Description', amount: 'Montant', taxable: 'Montant HT', total: 'Total (TVA incluse)', service: 'Prestation', type: 'Type', boat: 'Bateau', dates: 'Dates début / fin', ports: 'Port départ / arrivée', travellers: 'Nb. de voyageurs', price: 'Montant total client' },
+  en: { invoice: 'INVOICE', billTo: 'Billed to', from: 'From', description: 'Description', amount: 'Amount', taxable: 'Taxable amount', total: 'Total (VAT incl.)', service: 'Service', type: 'Offer type', boat: 'Boat', dates: 'Start / End dates', ports: 'Starting / Landing Port', travellers: 'Nb. of travellers', price: "Client's total amount" },
+  fr: { invoice: 'FACTURE', billTo: 'Facturé à', from: 'Émetteur', description: 'Description', amount: 'Montant', taxable: 'Montant HT', total: 'Total (TVA incluse)', service: 'Prestation', type: "Type d'offre", boat: 'Bateau', dates: 'Dates début / fin', ports: 'Port départ / arrivée', travellers: 'Nb. de voyageurs', price: 'Montant total client' },
 }
 
 interface Props { form: InvoiceFormData; amounts: InvoiceAmounts | null; settings: Settings; onClose: () => void; onSave: () => void }
+
+
+function getCountryName(code: string, lang: string): string {
+  if (!code) return ''
+  try {
+    const names = new Intl.DisplayNames([lang === 'fr' ? 'fr' : 'en'], { type: 'region' })
+    return names.of(code.toUpperCase()) ?? code
+  } catch { return code }
+}
+
+function formatClientTotal(val: string, lang: string): string {
+  if (!val) return ''
+  const n = parseFloat(val.replace(/\s/g, '').replace(',', '.'))
+  if (isNaN(n)) return val
+  return lang === 'fr'
+    ? `${n.toLocaleString('fr-FR')} EUR`
+    : `${n.toLocaleString('en-GB')} EUR`
+}
 
 export default function InvoicePreviewModal({ form, amounts, settings, onClose, onSave }: Props) {
   const lang = form.language; const t = I18N[lang]
@@ -19,7 +37,7 @@ export default function InvoicePreviewModal({ form, amounts, settings, onClose, 
     { label: t.boat, value: boatFull },
     { label: t.dates, value: [form.start_date, form.end_date].filter(Boolean).join(' → ') },
     { label: t.ports, value: [form.starting_port, form.landing_port].filter(Boolean).join(' / ') },
-    { label: t.travellers, value: form.nb_travellers }, { label: t.price, value: form.client_total_price },
+    { label: t.travellers, value: form.nb_travellers }, { label: t.price, value: form.client_total_price ? formatClientTotal(form.client_total_price, lang) : '' },
   ].filter(r => r.value)
 
   return (
@@ -47,7 +65,7 @@ export default function InvoicePreviewModal({ form, amounts, settings, onClose, 
                 <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.8px', color: 'var(--gray-400)', marginBottom: 6 }}>{t.billTo}</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>{form.recipient_name || '—'}</div>
                 <div style={{ color: 'var(--gray-600)', lineHeight: 1.8, marginTop: 2 }}>
-                  <div>{form.recipient_address}</div><div>{form.recipient_country}</div>
+                  <div>{form.recipient_address}</div><div>{getCountryName(form.recipient_country_code, lang) || form.recipient_country}</div>
                   {form.recipient_vat_number && <div>VAT: {form.recipient_vat_number}</div>}
                 </div>
               </div>

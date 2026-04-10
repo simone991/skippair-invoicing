@@ -91,11 +91,12 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
     setForm(f => ({ ...f, [k]: v }))
 
   // ── Quote fetch ─────────────────────────────────────────────
-  const fetchQuote = async () => {
+  const fetchQuote = async (forceLang?: string) => {
     if (!form.quote_number.trim()) return
     setFetchingQuote(true); setQuoteError(''); setQuoteFetched(false)
     try {
-      const res = await fetch(`/api/quotes?id=${encodeURIComponent(form.quote_number.trim())}&lang=${form.language}`)
+      const lang = forceLang ?? form.language
+      const res = await fetch(`/api/quotes?id=${encodeURIComponent(form.quote_number.trim())}&lang=${lang}`)
       const data = await res.json()
       if (!res.ok) { setQuoteError(data.error); return }
       const f = data.fields
@@ -251,6 +252,7 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
                     const found = SERVICE_TYPES.find(s => s.key === serviceKey)
                     if (found) setF('service_name', newLang === 'fr' ? found.fr : found.en)
                   }
+                  if (quoteFetched && form.quote_number.trim()) fetchQuote(newLang)
                 }}>
                   <option value="en">English</option>
                   <option value="fr">Français</option>
@@ -305,7 +307,7 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Type {!form.quote_number && <span style={{ color: 'var(--red)' }}>*</span>}</label>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Offer type {!form.quote_number && <span style={{ color: 'var(--red)' }}>*</span>}</label>
                   <input className={`form-input ${fieldError('service_type') ? 'error' : ''}`} value={form.service_type} onChange={e => setF('service_type', e.target.value)} placeholder="Boat rental" />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -323,7 +325,7 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
                   <input className={`form-input ${fieldError('end_date') ? 'error' : ''}`} value={form.end_date} onChange={e => setF('end_date', e.target.value)} placeholder="30.08.2025 09:00" />
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Starting port {!form.quote_number && <span style={{ color: 'var(--red)' }}>*</span>}</label>
                   <input className={`form-input ${fieldError('starting_port') ? 'error' : ''}`} value={form.starting_port} onChange={e => setF('starting_port', e.target.value)} />
@@ -332,13 +334,15 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
                   <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Landing port {!form.quote_number && <span style={{ color: 'var(--red)' }}>*</span>}</label>
                   <input className={`form-input ${fieldError('landing_port') ? 'error' : ''}`} value={form.landing_port} onChange={e => setF('landing_port', e.target.value)} />
                 </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Travellers {!form.quote_number && <span style={{ color: 'var(--red)' }}>*</span>}</label>
                   <input className={`form-input ${fieldError('nb_travellers') ? 'error' : ''}`} type="number" value={form.nb_travellers} onChange={e => setF('nb_travellers', e.target.value)} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Client total {!form.quote_number && <span style={{ color: 'var(--red)' }}>*</span>}</label>
-                  <input className={`form-input ${fieldError('client_total_price') ? 'error' : ''}`} value={form.client_total_price} onChange={e => setF('client_total_price', e.target.value)} placeholder="3.000 EUR" />
+                  <input className={`form-input ${fieldError('client_total_price') ? 'error' : ''}`} type="text" inputMode="decimal" value={form.client_total_price} onChange={e => setF('client_total_price', e.target.value)} placeholder="3000" />
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>

@@ -6,6 +6,24 @@ import { createServerSupabaseClient } from '@/lib/supabase'
 import { triggerN8nInvoice } from '@/lib/n8n'
 import { N8nGenerateInvoicePayload } from '@/types'
 
+
+function getCountryName(code: string, lang: string): string {
+  if (!code) return ''
+  try {
+    const names = new Intl.DisplayNames([lang === 'fr' ? 'fr' : 'en'], { type: 'region' })
+    return names.of(code.toUpperCase()) ?? code
+  } catch { return code }
+}
+
+function formatClientTotal(val: string | number | null, lang: string): string {
+  if (!val) return ''
+  const n = parseFloat(String(val).replace(/\s/g, '').replace(',', '.'))
+  if (isNaN(n)) return String(val ?? '')
+  return lang === 'fr'
+    ? `${n.toLocaleString('fr-FR')} EUR`
+    : `${n.toLocaleString('en-GB')} EUR`
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createServerSupabaseClient()
@@ -51,7 +69,7 @@ export async function POST(req: NextRequest) {
       language: lang, isTest: invoice.is_test,
       recipient: {
         name: invoice.recipient_name, address: invoice.recipient_address,
-        country: invoice.recipient_country, vatNumber: invoice.recipient_vat_number,
+        country: getCountryName(invoice.recipient_country_code, lang), vatNumber: invoice.recipient_vat_number,
         email: invoice.recipient_email, vatZone: invoice.recipient_vat_zone,
       },
       issuer: {
@@ -63,7 +81,7 @@ export async function POST(req: NextRequest) {
         boatModel: invoice.boat_model, boatYear: invoice.boat_year,
         startDate: invoice.start_date, endDate: invoice.end_date,
         startingPort: invoice.starting_port, landingPort: invoice.landing_port,
-        nbTravellers: invoice.nb_travellers, clientTotalPrice: invoice.client_total_price,
+        nbTravellers: invoice.nb_travellers, clientTotalPrice: formatClientTotal(invoice.client_total_price, lang),
       },
       amounts: {
         taxable: invoice.taxable_amount, vatRate: invoice.vat_rate,

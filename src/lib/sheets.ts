@@ -92,7 +92,7 @@ function parsePrice(raw: string): string {
   if (!raw?.trim()) return ''
   const cleaned = raw.trim().replace(/\s/g, '').replace(',', '.')
   const n = parseFloat(cleaned)
-  return isNaN(n) ? '' : `${n.toLocaleString('fr-FR')} EUR`
+  return isNaN(n) ? '' : `${n}`
 }
 
 export function quoteToDescriptionFields(quote: Quote, lang = 'en') {
