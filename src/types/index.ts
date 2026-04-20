@@ -308,6 +308,7 @@ export interface N8nGenerateInvoicePayload {
   emailSubject: string
   emailBody: string
   gdriveFolderId: string
+  appUrl: string
 }
 
 // ── Validation ───────────────────────────────────────────────

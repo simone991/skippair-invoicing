@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
       emailSubject: replace(rawSubject),
       emailBody: replace(rawBody),
       gdriveFolderId: folderId,
+      appUrl: process.env.NEXT_PUBLIC_APP_URL ?? '',
     }
 
     const n8nResult = await triggerN8nInvoice(payload)
