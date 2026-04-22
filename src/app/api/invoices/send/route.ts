@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
       .replace(/\{\{sender_name\}\}/g, settings.issuer_name)
       .replace(/\{\{invoice_date\}\}/g, invoice.invoice_date)
       .replace(/\{\{total_amount\}\}/g, `€${invoice.total_amount.toFixed(2)}`)
+      // Preserve line breaks: convert \n to <br> for HTML email
+      .replace(/\n/g, '<br>')
 
     const folderId = invoice.is_test
       ? (settings.gdrive_test_folder_id ?? settings.gdrive_folder_id ?? '')

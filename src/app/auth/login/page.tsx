@@ -41,9 +41,8 @@ function LoginForm() {
   return (
     <div style={{ background: 'white', borderRadius: 16, padding: 40, width: '100%', maxWidth: 400, boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
-        <div style={{ width: 40, height: 40, background: 'var(--teal)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" style={{ width: 20, height: 20 }}><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icon.svg" alt="Skippair" style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0 }} />
         <div>
           <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--gray-800)' }}>Skippair Invoicing</div>
           <div style={{ fontSize: 12, color: 'var(--gray-400)' }}>CMSea SAS · Nantes</div>

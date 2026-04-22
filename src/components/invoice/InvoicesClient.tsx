@@ -140,7 +140,7 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
             <span style={{ fontSize: 12, color: 'var(--gray-600)' }}>{selected.size} selected</span>
             <button className="btn btn-outline btn-sm" onClick={handleDownload}><Download size={13} /> Download from Drive</button>
             {userRole === 'admin' && (
-              <button className="btn btn-danger btn-sm" onClick={() => setShowCancelConfirm(true)}><Ban size={13} /> Cancel selected</button>
+              <button className="btn btn-danger btn-sm" onClick={() => setShowCancelConfirm(true)}><Trash2 size={13} /> Delete</button>
             )}
             <button className="btn btn-ghost btn-sm" onClick={() => setSelected(new Set())}><X size={13} /></button>
           </div>
@@ -215,18 +215,18 @@ export default function InvoicesClient({ invoices, userRole }: { invoices: Invoi
         <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) setShowCancelConfirm(false) }}>
           <div className="modal" style={{ maxWidth: 440 }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 15, fontWeight: 600 }}>Cancel invoices</span>
+              <span style={{ fontSize: 15, fontWeight: 600 }}>Delete invoices</span>
               <button className="btn btn-ghost btn-sm" onClick={() => setShowCancelConfirm(false)}><X size={16} /></button>
             </div>
             <div style={{ padding: 24 }}>
               <div className="alert alert-error">
-                Cancel <strong>{selected.size} invoice{selected.size > 1 ? 's' : ''}</strong>? Status will be set to "Cancelled". This cannot be undone.
+                Delete <strong>{selected.size} invoice{selected.size > 1 ? 's' : ''}</strong>? The PDF will also be removed from Drive. This cannot be undone.
               </div>
             </div>
             <div style={{ padding: '16px 24px', borderTop: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button className="btn btn-outline" onClick={() => setShowCancelConfirm(false)} disabled={acting}>Cancel</button>
               <button className="btn btn-danger" onClick={handleCancel} disabled={acting}>
-                {acting ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,.4)', borderTopColor: 'white' }} />Processing…</> : <><Ban size={13} /> Confirm cancel</>}
+                {acting ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,.4)', borderTopColor: 'white' }} />Processing…</> : <><Trash2 size={13} /> Confirm deletion</>}
               </button>
             </div>
           </div>

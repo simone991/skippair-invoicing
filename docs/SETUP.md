@@ -58,7 +58,7 @@ GOOGLE_SHEETS_API_KEY=AIza...
 ## 3. n8n Workflow Setup
 
 ### 3.1 Import the workflow
-1. Open your n8n instance: https://simone-sailsquare.app.n8n.cloud
+1. Open your n8n instance: https://sailsquare-tech.app.n8n.cloud
 2. Workflows > Import from File
 3. Select `n8n/generate-invoice-workflow.json`
 
@@ -151,7 +151,8 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 GOOGLE_SHEETS_API_KEY
-N8N_WEBHOOK_URL
+N8N_WEBHOOK_URL                  ← https://sailsquare-tech.app.n8n.cloud/webhook/skippair-generate-invoice
+N8N_DELETE_DRIVE_WEBHOOK_URL     ← https://sailsquare-tech.app.n8n.cloud/webhook/skippair-delete-drive-file
 N8N_WEBHOOK_SECRET
 CLOUDCONVERT_API_KEY
 NEXT_PUBLIC_APP_URL     ← set to your Vercel URL

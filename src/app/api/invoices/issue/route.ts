@@ -5,14 +5,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase'
 import { triggerN8nInvoice } from '@/lib/n8n'
 import { N8nGenerateInvoicePayload } from '@/types'
+import { COUNTRIES } from '@/lib/countries'
 
-
-function getCountryName(code: string, lang: string): string {
-  if (!code) return ''
+function getCountryName(code: string, lang: string, fallback?: string): string {
+  if (!code) return fallback ?? ''
   try {
-    const names = new Intl.DisplayNames([lang === 'fr' ? 'fr' : 'en'], { type: 'region' })
-    return names.of(code.toUpperCase()) ?? code
-  } catch { return code }
+    const locale = lang === 'fr' ? 'fr' : 'en'
+    const names = new Intl.DisplayNames([locale], { type: 'region' })
+    const result = names.of(code.toUpperCase())
+    // If Intl returned a real name (not just the code itself), use it
+    if (result && result !== code.toUpperCase()) return result
+  } catch { /* fall through */ }
+  // Fallback: use COUNTRIES list (English), or the stored country name
+  return COUNTRIES.find(c => c.code === code.toUpperCase())?.name ?? fallback ?? code
 }
 
 function formatClientTotal(val: string | number | null, lang: string): string {
@@ -69,7 +74,7 @@ export async function POST(req: NextRequest) {
       language: lang, isTest: invoice.is_test,
       recipient: {
         name: invoice.recipient_name, address: invoice.recipient_address,
-        country: getCountryName(invoice.recipient_country_code, lang), vatNumber: invoice.recipient_vat_number,
+        country: getCountryName(invoice.recipient_country_code, lang, invoice.recipient_country), vatNumber: invoice.recipient_vat_number,
         email: invoice.recipient_email, vatZone: invoice.recipient_vat_zone,
       },
       issuer: {

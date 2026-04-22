@@ -307,7 +307,7 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Offer type {!form.quote_number && <span style={{ color: 'var(--red)' }}>*</span>}</label>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>{form.language === 'fr' ? "Type d'offre" : 'Offer type'} {!form.quote_number && <span style={{ color: 'var(--red)' }}>*</span>}</label>
                   <input className={`form-input ${fieldError('service_type') ? 'error' : ''}`} value={form.service_type} onChange={e => setF('service_type', e.target.value)} placeholder="Boat rental" />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>

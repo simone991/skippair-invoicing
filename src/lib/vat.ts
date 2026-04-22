@@ -52,6 +52,14 @@ export function vatLabel(rate: number, language: InvoiceLanguage): string {
 }
 
 /**
+ * Some EU countries use a VAT prefix that differs from their ISO country code.
+ * e.g. Greece: country code GR, but VAT numbers start with EL.
+ */
+const VAT_PREFIX_EXCEPTIONS: Record<string, string> = {
+  GR: 'EL',
+}
+
+/**
  * Warn if country/VAT number are inconsistent with VAT rules.
  */
 export function getVatWarning(
@@ -63,7 +71,8 @@ export function getVatWarning(
   if (zone === 'eu' && type === 'company' && !vatNumber) {
     return `EU company in ${countryCode} — VAT number required for reverse charge.`
   }
-  if (vatNumber && !vatNumber.startsWith(countryCode)) {
+  const expectedPrefix = VAT_PREFIX_EXCEPTIONS[countryCode] ?? countryCode
+  if (vatNumber && !vatNumber.startsWith(expectedPrefix)) {
     return `VAT number prefix doesn't match country code ${countryCode}.`
   }
   return null

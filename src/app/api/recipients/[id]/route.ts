@@ -43,5 +43,16 @@ export async function PATCH(
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Propagate email change to existing non-cancelled invoices for this recipient
+  // so that the "Send" button becomes available in the invoice list without re-creating the invoice.
+  if (formData.email !== undefined) {
+    await supabase
+      .from('invoices')
+      .update({ recipient_email: formData.email || null })
+      .eq('recipient_id', params.id)
+      .neq('status', 'cancelled')
+  }
+
   return NextResponse.json({ recipient: data })
 }
