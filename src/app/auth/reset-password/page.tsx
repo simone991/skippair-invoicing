@@ -15,21 +15,23 @@ function ResetPasswordForm() {
   const [error, setError] = useState('')
   const supabase = createClient()
 
-  // When Supabase redirects back with ?code=..., exchange it for a session
   useEffect(() => {
-    const code = searchParams.get('code')
-    if (!code) return
-    supabase.auth.exchangeCodeForSession(code).then(({ error: err }) => {
-      if (err) { setError('Invalid or expired reset link. Please request a new one.'); return }
-      // Code exchanged — session is now active, show password form
-      setStep('verify')
+    // If redirected back from /auth/callback with an error
+    if (searchParams.get('error') === 'invalid_link') {
+      setError('Invalid or expired reset link. Please request a new one.')
+      return
+    }
+    // If the callback route already exchanged the code, the user has an active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setStep('verify')
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError('')
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      // /auth/callback exchanges the code server-side, then redirects here
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`,
     })
     setLoading(false)
     if (err) { setError(err.message); return }
@@ -70,8 +72,8 @@ function ResetPasswordForm() {
 
       {step === 'verify' && (
         <form onSubmit={handleSetPassword} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div className="alert alert-success" style={{ marginBottom: 4 }}>Check your email and click the reset link, then return here.</div>
-          <input className="form-input" type="password" placeholder="New password (min. 8 chars)" value={newPw} onChange={e => setNewPw(e.target.value)} required />
+          <p style={{ fontSize: 13, color: 'var(--gray-600)' }}>Enter your new password below.</p>
+          <input className="form-input" type="password" placeholder="New password (min. 8 chars)" value={newPw} onChange={e => setNewPw(e.target.value)} required autoFocus />
           <input className="form-input" type="password" placeholder="Confirm new password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} required />
           {error && <div className="alert alert-error">{error}</div>}
           <button type="submit" className="btn btn-teal btn-lg" disabled={loading} style={{ justifyContent: 'center' }}>

@@ -29,7 +29,7 @@ export async function middleware(request: NextRequest) {
   console.log('[middleware] user:', user?.id ?? 'null')
 
   const { pathname } = request.nextUrl
-  const publicPaths = ['/auth/login', '/auth/reset-password']
+  const publicPaths = ['/auth/login', '/auth/reset-password', '/auth/callback']
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
 
   if (!user && !isPublic && !pathname.startsWith('/api/generate-pdf')) {
