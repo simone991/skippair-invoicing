@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [step, setStep] = useState<'request' | 'verify' | 'done'>('request')
@@ -48,10 +48,8 @@ export default function ResetPasswordPage() {
     setTimeout(() => router.push('/dashboard'), 2000)
   }
 
-  const boxStyle = { background: 'white', borderRadius: 16, padding: 40, width: '100%', maxWidth: 400, boxShadow: '0 20px 60px rgba(0,0,0,.3)' }
-
   return (
-    <div style={boxStyle}>
+    <>
       <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
         {step === 'request' && 'Reset password'}
         {step === 'verify' && 'Set new password'}
@@ -91,6 +89,17 @@ export default function ResetPasswordPage() {
       <div style={{ textAlign: 'center', marginTop: 20 }}>
         <Link href="/auth/login" style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>← Back to login</Link>
       </div>
+    </>
+  )
+}
+
+export default function ResetPasswordPage() {
+  const boxStyle = { background: 'white', borderRadius: 16, padding: 40, width: '100%', maxWidth: 400, boxShadow: '0 20px 60px rgba(0,0,0,.3)' }
+  return (
+    <div style={boxStyle}>
+      <Suspense fallback={null}>
+        <ResetPasswordForm />
+      </Suspense>
     </div>
   )
 }
