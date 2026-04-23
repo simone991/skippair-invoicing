@@ -1,11 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState<'request' | 'verify' | 'done'>('request')
   const [email, setEmail] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -14,10 +15,21 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('')
   const supabase = createClient()
 
+  // When Supabase redirects back with ?code=..., exchange it for a session
+  useEffect(() => {
+    const code = searchParams.get('code')
+    if (!code) return
+    supabase.auth.exchangeCodeForSession(code).then(({ error: err }) => {
+      if (err) { setError('Invalid or expired reset link. Please request a new one.'); return }
+      // Code exchanged — session is now active, show password form
+      setStep('verify')
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError('')
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password?step=verify`,
+      redirectTo: `${window.location.origin}/auth/reset-password`,
     })
     setLoading(false)
     if (err) { setError(err.message); return }
