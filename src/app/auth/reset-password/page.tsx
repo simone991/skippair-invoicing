@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase'
 function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [step, setStep] = useState<'request' | 'verify' | 'done'>('request')
+  const [step, setStep] = useState<'request' | 'email_sent' | 'set_password' | 'done'>('request')
   const [email, setEmail] = useState('')
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
@@ -20,22 +20,20 @@ function ResetPasswordForm() {
       setError('Invalid or expired reset link. Please request a new one.')
       return
     }
-    // Only show the password form if we arrived via the /auth/callback route
-    // (which sets ?mode=set-password after a successful code exchange)
+    // Arrived via /auth/callback after clicking the email link → show password form
     if (searchParams.get('mode') === 'set-password') {
-      setStep('verify')
+      setStep('set_password')
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault(); setLoading(true); setError('')
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      // /auth/callback exchanges the code server-side, then redirects here
       redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password`,
     })
     setLoading(false)
     if (err) { setError(err.message); return }
-    setStep('verify')
+    setStep('email_sent') // show "check your email" — do NOT show password form yet
   }
 
   const handleSetPassword = async (e: React.FormEvent) => {
@@ -53,9 +51,10 @@ function ResetPasswordForm() {
   return (
     <>
       <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
-        {step === 'request' && 'Reset password'}
-        {step === 'verify' && 'Set new password'}
-        {step === 'done' && '✓ Password updated'}
+        {step === 'request'     && 'Reset password'}
+        {step === 'email_sent'  && 'Check your email'}
+        {step === 'set_password'&& 'Set new password'}
+        {step === 'done'        && '✓ Password updated'}
       </div>
       <div style={{ fontSize: 13, color: 'var(--gray-400)', marginBottom: 24 }}>Skippair Invoicing</div>
 
@@ -70,12 +69,25 @@ function ResetPasswordForm() {
         </form>
       )}
 
-      {step === 'verify' && (
+      {step === 'email_sent' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div className="alert alert-success">
+            We sent a reset link to <strong>{email}</strong>. Click it to set a new password.
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--gray-600)', margin: 0 }}>
+            Didn't receive it? Check your spam folder or{' '}
+            <button onClick={() => setStep('request')} style={{ background: 'none', border: 'none', color: 'var(--teal)', cursor: 'pointer', padding: 0, fontSize: 13 }}>
+              try again
+            </button>.
+          </p>
+        </div>
+      )}
+
+      {step === 'set_password' && (
         <form onSubmit={handleSetPassword} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <p style={{ fontSize: 13, color: 'var(--gray-600)' }}>Enter your new password below.</p>
+          {error && <div className="alert alert-error">{error}</div>}
           <input className="form-input" type="password" placeholder="New password (min. 8 chars)" value={newPw} onChange={e => setNewPw(e.target.value)} required autoFocus />
           <input className="form-input" type="password" placeholder="Confirm new password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} required />
-          {error && <div className="alert alert-error">{error}</div>}
           <button type="submit" className="btn btn-teal btn-lg" disabled={loading} style={{ justifyContent: 'center' }}>
             {loading ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,.4)', borderTopColor: 'white' }} />Saving…</> : 'Set new password'}
           </button>
@@ -88,9 +100,11 @@ function ResetPasswordForm() {
         </div>
       )}
 
-      <div style={{ textAlign: 'center', marginTop: 20 }}>
-        <Link href="/auth/login" style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>← Back to login</Link>
-      </div>
+      {step !== 'done' && (
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
+          <Link href="/auth/login" style={{ fontSize: 12, color: 'var(--teal)', textDecoration: 'none' }}>← Back to login</Link>
+        </div>
+      )}
     </>
   )
 }
