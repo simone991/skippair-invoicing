@@ -28,7 +28,12 @@ export async function GET(request: NextRequest) {
     )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+      const redirectUrl = new URL(`${origin}${next}`)
+      // Signal to the reset-password page that the session is ready
+      if (next.startsWith('/auth/reset-password')) {
+        redirectUrl.searchParams.set('mode', 'set-password')
+      }
+      return NextResponse.redirect(redirectUrl.toString())
     }
   }
 

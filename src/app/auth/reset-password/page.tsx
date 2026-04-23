@@ -16,15 +16,15 @@ function ResetPasswordForm() {
   const supabase = createClient()
 
   useEffect(() => {
-    // If redirected back from /auth/callback with an error
     if (searchParams.get('error') === 'invalid_link') {
       setError('Invalid or expired reset link. Please request a new one.')
       return
     }
-    // If the callback route already exchanged the code, the user has an active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setStep('verify')
-    })
+    // Only show the password form if we arrived via the /auth/callback route
+    // (which sets ?mode=set-password after a successful code exchange)
+    if (searchParams.get('mode') === 'set-password') {
+      setStep('verify')
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRequest = async (e: React.FormEvent) => {
