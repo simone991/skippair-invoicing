@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
         phone: settings.issuer_phone, email: settings.issuer_email,
       },
       description: {
+        clientName: invoice.client_name ?? null,
         serviceName: invoice.service_name, serviceType: invoice.service_type,
         boatModel: invoice.boat_model, boatYear: invoice.boat_year,
         startDate: invoice.start_date, endDate: invoice.end_date,

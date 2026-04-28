@@ -42,14 +42,18 @@ function rowToQuote(row: string[]): Quote {
     start: get(5), end: get(6), startingPort: get(7), landingPort: get(8),
     travellers: parseInt(get(9)) || 0, offerType: get(10),
     model: get(11), boatType: get(12), length: get(13), year: get(14),
-    price: get(15), globalPrice: get(16), orgName: get(17),
-    contactEmail: get(18), contactLabel: get(19),
+    price: get(15), globalPrice: get(16),
+    // R(17) = client total (not used directly — client_total_price derived from globalPrice/price)
+    clientName: get(18),  // S(18)
+    orgName: get(19),     // T(19)
+    contactEmail: get(20), // U(20)
+    contactLabel: get(21), // V(21)
   }
 }
 
 export async function fetchQuoteFromSheets(quoteId: string, sheetId: string, tabName: string): Promise<Quote | null> {
   const accessToken = await getGoogleAccessToken()
-  const range = encodeURIComponent(`${tabName}!A2:T`)
+  const range = encodeURIComponent(`${tabName}!A2:V`)
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}`
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -99,6 +103,7 @@ export function quoteToDescriptionFields(quote: Quote, lang = 'en') {
   const offerType = translateField(quote.offerType || quote.boatType, lang)
   const boatType  = translateField(quote.boatType, lang)
   return {
+    client_name:   quote.clientName,
     service_type:  offerType,
     boat_model:    [quote.model, boatType].filter(Boolean).join(' · '),
     boat_year:     quote.year,

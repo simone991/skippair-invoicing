@@ -81,6 +81,7 @@ export interface Quote {
   orgName: string
   contactEmail: string
   contactLabel: string
+  clientName: string
 }
 
 // ── Invoices ─────────────────────────────────────────────────
@@ -104,6 +105,7 @@ export interface Invoice {
   recipient_vat_zone: VatZone
 
   quote_number: string | null
+  client_name: string | null
   service_name: string
   service_type: string | null
   boat_model: string | null
@@ -188,6 +190,7 @@ export interface InvoiceFormData {
   recipient_type: RecipientType
   recipient_vat_zone: VatZone
 
+  client_name: string
   service_name: string
   service_type: string
   boat_model: string
@@ -285,6 +288,7 @@ export interface N8nGenerateInvoicePayload {
     email: string
   }
   description: {
+    clientName: string | null
     serviceName: string
     serviceType: string | null
     boatModel: string | null

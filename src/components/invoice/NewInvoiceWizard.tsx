@@ -35,7 +35,7 @@ const EMPTY_FORM: InvoiceFormData = {
   recipient_vat_number: '', recipient_email: '',
   recipient_type: 'company', recipient_vat_zone: 'non-eu',
   service_name: 'Travel agency commission',
-  service_type: '', boat_model: '', boat_year: '',
+  client_name: '', service_type: '', boat_model: '', boat_year: '',
   start_date: '', end_date: '', starting_port: '', landing_port: '',
   nb_travellers: '', client_total_price: '', taxable_amount: '', send_to_email: '',
 }
@@ -102,6 +102,7 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
       const f = data.fields
       setForm(prev => ({
         ...prev,
+        client_name: f.client_name ?? '',
         service_type: f.service_type ?? '', boat_model: f.boat_model ?? '',
         boat_year: f.boat_year ?? '', start_date: f.start_date ?? '',
         end_date: f.end_date ?? '', starting_port: f.starting_port ?? '',
@@ -310,6 +311,12 @@ export default function NewInvoiceWizard({ settings, userRole }: Props) {
                   <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>{form.language === 'fr' ? "Type d'offre" : 'Offer type'} {!form.quote_number && <span style={{ color: 'var(--red)' }}>*</span>}</label>
                   <input className={`form-input ${fieldError('service_type') ? 'error' : ''}`} value={form.service_type} onChange={e => setF('service_type', e.target.value)} placeholder="Boat rental" />
                 </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>{form.language === 'fr' ? 'Nom du client' : 'Client name'}</label>
+                  <input className="form-input" value={form.client_name} onChange={e => setF('client_name', e.target.value)} placeholder="Fabrice Maurel" />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--gray-600)' }}>Boat model</label>
                   <input className="form-input" value={form.boat_model} onChange={e => setF('boat_model', e.target.value)} placeholder="BALI Catspace 2007" />

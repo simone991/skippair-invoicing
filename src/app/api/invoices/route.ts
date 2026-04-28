@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         recipient_type:         body.recipient_type,
         recipient_vat_zone:     body.recipient_vat_zone,
         quote_number:           body.quote_number || null,
+        client_name:            body.client_name || null,
         service_name:           body.service_name,
         service_type:           body.service_type || null,
         boat_model:             body.boat_model || null,
