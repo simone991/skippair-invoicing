@@ -42,6 +42,7 @@ const EMPTY_FORM: InvoiceFormData = {
   landing_port: '',
   nb_travellers: '',
   client_total_price: '',
+  client_name: '',
   taxable_amount: '',
   send_to_email: '',
 }
